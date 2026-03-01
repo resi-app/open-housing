@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { hasPermission } from "@/lib/permissions";
+import InvitationModal from "@/components/owners/InvitationModal";
 import type { UserRole } from "@/types";
 
 interface UserData {
@@ -34,6 +35,7 @@ export default function VlastniciPage() {
   const [showForm, setShowForm] = useState(false);
   const [formError, setFormError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   const role = (session?.user?.role || "owner") as UserRole;
 
@@ -94,12 +96,20 @@ export default function VlastniciPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white text-base font-medium rounded-lg transition-colors"
-        >
-          {showForm ? tCommon("close") : t("addUser")}
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowInviteModal(true)}
+            className="px-5 py-3 bg-green-600 hover:bg-green-700 text-white text-base font-medium rounded-lg transition-colors"
+          >
+            {t("invite")}
+          </button>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white text-base font-medium rounded-lg transition-colors"
+          >
+            {showForm ? tCommon("close") : t("addUser")}
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -250,6 +260,11 @@ export default function VlastniciPage() {
           </div>
         </div>
       )}
+
+      <InvitationModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+      />
     </div>
   );
 }

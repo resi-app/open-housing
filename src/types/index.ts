@@ -9,6 +9,7 @@ import type {
   mandates,
   posts,
   documents,
+  invitations,
 } from "@/db/schema";
 
 export type Building = InferSelectModel<typeof building>;
@@ -20,12 +21,14 @@ export type Vote = InferSelectModel<typeof votes>;
 export type Mandate = InferSelectModel<typeof mandates>;
 export type Post = InferSelectModel<typeof posts>;
 export type Document = InferSelectModel<typeof documents>;
+export type Invitation = InferSelectModel<typeof invitations>;
 
 export type UserRole = "admin" | "owner" | "tenant" | "vote_counter";
 export type VoteChoice = "za" | "proti" | "zdrzal_sa";
 export type VoteType = "electronic" | "paper";
 export type VotingStatus = "draft" | "active" | "closed";
 export type PostCategory = "info" | "urgent" | "event" | "maintenance";
+export type InvitationStatus = "pending" | "used" | "expired";
 
 export type SafeUser = Omit<User, "passwordHash">;
 

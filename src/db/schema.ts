@@ -163,6 +163,24 @@ export const documents = pgTable("documents", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const invitations = pgTable("invitations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  role: userRoleEnum("role").notNull().default("owner"),
+  flatId: uuid("flat_id").references(() => flats.id, { onDelete: "set null" }),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedByUserId: uuid("used_by_user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  createdById: uuid("created_by_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 // ── Relations ──────────────────────────────────────────
 
 export const buildingRelations = relations(building, ({ many }) => ({
@@ -261,5 +279,22 @@ export const documentsRelations = relations(documents, ({ one }) => ({
   entrance: one(entrances, {
     fields: [documents.entranceId],
     references: [entrances.id],
+  }),
+}));
+
+export const invitationsRelations = relations(invitations, ({ one }) => ({
+  flat: one(flats, {
+    fields: [invitations.flatId],
+    references: [flats.id],
+  }),
+  usedBy: one(users, {
+    fields: [invitations.usedByUserId],
+    references: [users.id],
+    relationName: "usedInvitation",
+  }),
+  createdBy: one(users, {
+    fields: [invitations.createdById],
+    references: [users.id],
+    relationName: "createdInvitations",
   }),
 }));
