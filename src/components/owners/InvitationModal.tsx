@@ -124,6 +124,8 @@ export default function InvitationModal({
               >
                 <option value="owner">{t("roleOwner")}</option>
                 <option value="tenant">{t("roleTenant")}</option>
+                <option value="vote_counter">{t("roleVoteCounter")}</option>
+                <option value="caretaker">{t("roleCaretaker")}</option>
               </select>
             </div>
 

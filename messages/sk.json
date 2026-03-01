@@ -169,6 +169,7 @@
     "roleOwner": "Vlastník",
     "roleTenant": "Nájomca",
     "roleVoteCounter": "Zapisovateľ",
+    "roleCaretaker": "Domovník",
     "statusActive": "Aktívny",
     "statusInactive": "Neaktívny",
     "userNotFound": "Používateľ nenájdený.",
@@ -202,13 +203,16 @@
     "roleAdmin": "Administrátor",
     "roleOwner": "Vlastník",
     "roleTenant": "Nájomca",
-    "roleVoteCounter": "Zapisovateľ"
+    "roleVoteCounter": "Zapisovateľ",
+    "roleCaretaker": "Domovník"
   },
   "Invitations": {
     "title": "Pozvánka",
     "roleLabel": "Rola",
     "roleOwner": "Vlastník",
     "roleTenant": "Nájomca",
+    "roleVoteCounter": "Zapisovateľ",
+    "roleCaretaker": "Domovník",
     "flatLabel": "Byt (voliteľné)",
     "noFlat": "Bez priradenia bytu",
     "expiryLabel": "Platnosť",

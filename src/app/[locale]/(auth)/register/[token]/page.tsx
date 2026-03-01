@@ -18,6 +18,7 @@ const roleKeys: Record<string, string> = {
   owner: "roleOwner",
   tenant: "roleTenant",
   vote_counter: "roleVoteCounter",
+  caretaker: "roleCaretaker",
 };
 
 export default function RegisterPage() {

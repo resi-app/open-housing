@@ -23,7 +23,7 @@ export type Post = InferSelectModel<typeof posts>;
 export type Document = InferSelectModel<typeof documents>;
 export type Invitation = InferSelectModel<typeof invitations>;
 
-export type UserRole = "admin" | "owner" | "tenant" | "vote_counter";
+export type UserRole = "admin" | "owner" | "tenant" | "vote_counter" | "caretaker";
 export type VoteChoice = "za" | "proti" | "zdrzal_sa";
 export type VoteType = "electronic" | "paper";
 export type VotingStatus = "draft" | "active" | "closed";

@@ -169,6 +169,7 @@
     "roleOwner": "Owner",
     "roleTenant": "Tenant",
     "roleVoteCounter": "Vote counter",
+    "roleCaretaker": "Caretaker",
     "statusActive": "Active",
     "statusInactive": "Inactive",
     "userNotFound": "User not found.",
@@ -202,13 +203,16 @@
     "roleAdmin": "Administrator",
     "roleOwner": "Owner",
     "roleTenant": "Tenant",
-    "roleVoteCounter": "Vote counter"
+    "roleVoteCounter": "Vote counter",
+    "roleCaretaker": "Caretaker"
   },
   "Invitations": {
     "title": "Invitation",
     "roleLabel": "Role",
     "roleOwner": "Owner",
     "roleTenant": "Tenant",
+    "roleVoteCounter": "Vote counter",
+    "roleCaretaker": "Caretaker",
     "flatLabel": "Flat (optional)",
     "noFlat": "No flat assigned",
     "expiryLabel": "Valid for",

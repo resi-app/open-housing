@@ -18,6 +18,7 @@ export const userRoleEnum = pgEnum("user_role", [
   "owner",
   "tenant",
   "vote_counter",
+  "caretaker",
 ]);
 
 export const voteChoiceEnum = pgEnum("vote_choice", [

@@ -1,16 +1,16 @@
 import type { UserRole } from "@/types";
 
 const permissions = {
-  createPost: ["admin"],
-  viewPosts: ["admin", "owner", "tenant", "vote_counter"],
+  createPost: ["admin", "caretaker"],
+  viewPosts: ["admin", "owner", "tenant", "vote_counter", "caretaker"],
   createVoting: ["admin"],
   vote: ["admin", "owner"],
   recordPaperVote: ["admin", "vote_counter"],
-  viewVotingResults: ["admin", "owner"],
+  viewVotingResults: ["admin", "owner", "caretaker"],
   assignVoteCounter: ["admin"],
   grantMandate: ["admin", "owner"],
   manageUsers: ["admin"],
-  viewSettings: ["admin"],
+  viewSettings: ["admin", "caretaker"],
 } as const;
 
 export type Permission = keyof typeof permissions;

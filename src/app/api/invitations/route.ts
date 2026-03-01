@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { role, flatId, expiresInDays = 7 } = body;
 
-  if (!role || !["owner", "tenant", "admin"].includes(role)) {
+  if (!role || !["owner", "tenant", "admin", "vote_counter", "caretaker"].includes(role)) {
     return NextResponse.json(
       { error: "Neplatná rola" },
       { status: 400 }

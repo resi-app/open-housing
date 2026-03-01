@@ -24,6 +24,7 @@ const roleKeys: Record<UserRole, string> = {
   owner: "roleOwner",
   tenant: "roleTenant",
   vote_counter: "roleVoteCounter",
+  caretaker: "roleCaretaker",
 };
 
 export default function VlastniciPage() {
@@ -177,6 +178,8 @@ export default function VlastniciPage() {
                 <option value="owner">{t("roleOwner")}</option>
                 <option value="tenant">{t("roleTenant")}</option>
                 <option value="admin">{t("roleAdmin")}</option>
+                <option value="vote_counter">{t("roleVoteCounter")}</option>
+                <option value="caretaker">{t("roleCaretaker")}</option>
               </select>
             </div>
             <button
