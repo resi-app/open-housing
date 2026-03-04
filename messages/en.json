@@ -35,7 +35,8 @@
   },
   "Header": {
     "openMenu": "Open menu",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "profile": "Profile"
   },
   "LanguageSwitcher": {
     "sk": "SK",
@@ -182,7 +183,13 @@
     "removeFlat": "Remove flat",
     "deactivate": "Deactivate",
     "activate": "Activate",
-    "invite": "Invite"
+    "invite": "Invite",
+    "deleteUser": "Delete user",
+    "confirmDeleteUser": "Are you sure you want to permanently delete user {name}?",
+    "deleteWarning": "This action cannot be undone.",
+    "deleteSuccess": "User has been deleted.",
+    "deleteFailed": "Failed to delete user.",
+    "hasRelatedRecords": "User has related records. Use deactivation instead of deletion."
   },
   "Register": {
     "loading": "Loading...",
@@ -285,5 +292,28 @@
     "votingMethodSaved": "Voting method has been saved.",
     "votingMethodSaveFailed": "Failed to save voting method.",
     "missingAreaWarning": "Some flats do not have an area set. Default weight of 1 will be used for area-based voting."
+  },
+  "Profile": {
+    "title": "Profile",
+    "userInfo": "Account information",
+    "nameLabel": "Name",
+    "emailLabel": "Email",
+    "roleLabel": "Role",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "changePasswordButton": "Change password",
+    "changing": "Changing...",
+    "passwordChanged": "Password has been changed successfully.",
+    "passwordChangeFailed": "Failed to change password.",
+    "wrongPassword": "Incorrect current password.",
+    "passwordTooShort": "New password must be at least 6 characters.",
+    "passwordsDoNotMatch": "Passwords do not match.",
+    "roleAdmin": "Administrator",
+    "roleOwner": "Owner",
+    "roleTenant": "Tenant",
+    "roleVoteCounter": "Vote counter",
+    "roleCaretaker": "Caretaker"
   }
 }

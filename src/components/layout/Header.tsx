@@ -2,6 +2,7 @@
 
 import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function Header({
@@ -38,7 +39,13 @@ export default function Header({
 
         <div className="flex items-center gap-4 ml-auto">
           <LanguageSwitcher />
-          <span className="text-base text-gray-700">{userName}</span>
+          <Link
+            href="/profile"
+            className="text-base text-gray-700 hover:text-blue-600 transition-colors"
+            title={t("profile")}
+          >
+            {userName}
+          </Link>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="px-4 py-2 text-base text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"

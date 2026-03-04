@@ -35,7 +35,8 @@
   },
   "Header": {
     "openMenu": "Otvoriť menu",
-    "logout": "Odhlásiť sa"
+    "logout": "Odhlásiť sa",
+    "profile": "Profil"
   },
   "LanguageSwitcher": {
     "sk": "SK",
@@ -182,7 +183,13 @@
     "removeFlat": "Odobrať byt",
     "deactivate": "Deaktivovať",
     "activate": "Aktivovať",
-    "invite": "Pozvať"
+    "invite": "Pozvať",
+    "deleteUser": "Zmazať používateľa",
+    "confirmDeleteUser": "Naozaj chcete natrvalo zmazať používateľa {name}?",
+    "deleteWarning": "Táto akcia je nevratná.",
+    "deleteSuccess": "Používateľ bol zmazaný.",
+    "deleteFailed": "Nepodarilo sa zmazať používateľa.",
+    "hasRelatedRecords": "Používateľ má súvisiace záznamy. Použite deaktiváciu namiesto zmazania."
   },
   "Register": {
     "loading": "Načítavam...",
@@ -285,5 +292,28 @@
     "votingMethodSaved": "Spôsob hlasovania bol uložený.",
     "votingMethodSaveFailed": "Nepodarilo sa uložiť spôsob hlasovania.",
     "missingAreaWarning": "Niektoré byty nemajú zadanú plochu. Pri hlasovaní podľa plochy sa použije predvolená váha 1."
+  },
+  "Profile": {
+    "title": "Profil",
+    "userInfo": "Informácie o účte",
+    "nameLabel": "Meno",
+    "emailLabel": "Email",
+    "roleLabel": "Rola",
+    "changePassword": "Zmena hesla",
+    "currentPassword": "Aktuálne heslo",
+    "newPassword": "Nové heslo",
+    "confirmPassword": "Potvrdenie nového hesla",
+    "changePasswordButton": "Zmeniť heslo",
+    "changing": "Mením...",
+    "passwordChanged": "Heslo bolo úspešne zmenené.",
+    "passwordChangeFailed": "Nepodarilo sa zmeniť heslo.",
+    "wrongPassword": "Nesprávne aktuálne heslo.",
+    "passwordTooShort": "Nové heslo musí mať aspoň 6 znakov.",
+    "passwordsDoNotMatch": "Heslá sa nezhodujú.",
+    "roleAdmin": "Administrátor",
+    "roleOwner": "Vlastník",
+    "roleTenant": "Nájomca",
+    "roleVoteCounter": "Zapisovateľ",
+    "roleCaretaker": "Domovník"
   }
 }

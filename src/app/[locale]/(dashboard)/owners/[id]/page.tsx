@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations, useFormatter } from "next-intl";
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { hasPermission } from "@/lib/permissions";
 import type { UserRole } from "@/types";
 
@@ -67,6 +67,11 @@ export default function UserDetailPage() {
   const [editPhone, setEditPhone] = useState("");
   const [editRole, setEditRole] = useState<UserRole>("owner");
   const [editFlatIds, setEditFlatIds] = useState<string[]>([]);
+
+  const router = useRouter();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const role = (session?.user?.role || "owner") as UserRole;
   const canManage = hasPermission(role, "manageUsers");
@@ -161,6 +166,26 @@ export default function UserDetailPage() {
       await fetchUser();
     }
     setSaving(false);
+  }
+
+  async function handleDelete() {
+    setDeleting(true);
+    setDeleteError("");
+
+    const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
+
+    if (!res.ok) {
+      const data = await res.json();
+      if (res.status === 409) {
+        setDeleteError(t("hasRelatedRecords"));
+      } else {
+        setDeleteError(data.error || t("deleteFailed"));
+      }
+      setDeleting(false);
+      return;
+    }
+
+    router.push("/owners");
   }
 
   if (!canManage) {
@@ -288,6 +313,15 @@ export default function UserDetailPage() {
               >
                 {user.isActive ? t("deactivate") : t("activate")}
               </button>
+              <button
+                onClick={() => {
+                  setDeleteError("");
+                  setShowDeleteModal(true);
+                }}
+                className="px-5 py-3 bg-red-600 hover:bg-red-700 text-white text-base font-medium rounded-lg transition-colors"
+              >
+                {tCommon("delete")}
+              </button>
             </div>
           </>
         ) : (
@@ -397,6 +431,45 @@ export default function UserDetailPage() {
           </form>
         )}
       </div>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-md w-full">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">
+              {t("deleteUser")}
+            </h2>
+            <p className="text-base text-gray-600 mb-1">
+              {t("confirmDeleteUser", { name: user.name })}
+            </p>
+            <p className="text-sm text-red-600 mb-4">
+              {t("deleteWarning")}
+            </p>
+
+            {deleteError && (
+              <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-base mb-4">
+                {deleteError}
+              </div>
+            )}
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                className="px-5 py-3 text-base font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                {tCommon("cancel")}
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-5 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-base font-medium rounded-lg transition-colors"
+              >
+                {deleting ? tCommon("loading") : tCommon("delete")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

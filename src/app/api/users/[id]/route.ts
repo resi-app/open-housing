@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { users, flats, entrances, userFlats } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { users, flats, entrances, userFlats, votes, posts, documents, mandates, votings } from "@/db/schema";
+import { eq, or } from "drizzle-orm";
 import { hasPermission } from "@/lib/permissions";
 import type { UserRole } from "@/types";
 
@@ -170,4 +170,84 @@ export async function PATCH(
   }
 
   return NextResponse.json(updated);
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: "Neautorizovaný prístup" }, { status: 401 });
+  }
+
+  if (!hasPermission(session.user.role as UserRole, "manageUsers")) {
+    return NextResponse.json({ error: "Nemáte oprávnenie" }, { status: 403 });
+  }
+
+  const { id } = await params;
+
+  // Prevent self-deletion
+  if (session.user.id === id) {
+    return NextResponse.json(
+      { error: "Nemôžete zmazať vlastný účet" },
+      { status: 400 }
+    );
+  }
+
+  // Check user exists
+  const [user] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1);
+
+  if (!user) {
+    return NextResponse.json({ error: "Používateľ nenájdený" }, { status: 404 });
+  }
+
+  // Check for related records
+  const [hasVotes] = await db
+    .select({ id: votes.id })
+    .from(votes)
+    .where(eq(votes.ownerId, id))
+    .limit(1);
+
+  const [hasPosts] = await db
+    .select({ id: posts.id })
+    .from(posts)
+    .where(eq(posts.authorId, id))
+    .limit(1);
+
+  const [hasDocuments] = await db
+    .select({ id: documents.id })
+    .from(documents)
+    .where(eq(documents.uploadedById, id))
+    .limit(1);
+
+  const [hasMandates] = await db
+    .select({ id: mandates.id })
+    .from(mandates)
+    .where(or(eq(mandates.fromOwnerId, id), eq(mandates.toOwnerId, id)))
+    .limit(1);
+
+  const [hasVotings] = await db
+    .select({ id: votings.id })
+    .from(votings)
+    .where(or(eq(votings.createdById, id), eq(votings.voteCounterId, id)))
+    .limit(1);
+
+  if (hasVotes || hasPosts || hasDocuments || hasMandates || hasVotings) {
+    return NextResponse.json(
+      { error: "Používateľ má súvisiace záznamy. Použite deaktiváciu namiesto zmazania." },
+      { status: 409 }
+    );
+  }
+
+  // Clean up userFlats junction table, then delete user
+  // (invitations.createdById cascades, invitations.usedByUserId sets null)
+  await db.delete(userFlats).where(eq(userFlats.userId, id));
+  await db.delete(users).where(eq(users.id, id));
+
+  return NextResponse.json({ success: true });
 }
