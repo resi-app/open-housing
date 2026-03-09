@@ -24,7 +24,7 @@ services:
         max-file: "3"
 
   app:
-    image: open-resiapp/open-resiapp:latest
+    image: ipk0/open-resiapp:latest
     restart: unless-stopped
     depends_on:
       db:

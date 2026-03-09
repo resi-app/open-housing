@@ -1,40 +1,109 @@
 # OpenResiApp
 
+[![Docker Hub](https://img.shields.io/docker/v/ipk0/open-resiapp?label=Docker%20Hub&sort=semver)](https://hub.docker.com/r/ipk0/open-resiapp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Open-source web application for managing residential apartment buildings (bytove domy) in Slovakia. Built for building administrators, owners, and tenants.
 
 ## Features
 
-- **Board** — Announcements with categories (info, urgent, event, maintenance)
-- **Voting** — Weighted voting by ownership share, electronic and paper ballots, mandate delegation
-- **Owner Management** — Users with role-based access (admin, owner, tenant, vote counter)
+- **Weighted Voting** — Three methods (by share, by flat, by area), three quorum types, SHA-256 audited votes
+- **Paper Ballots** — Vote counter enters ballots for elderly residents with photo proof
+- **Mandates** — Power of attorney delegation per § 14(5) of Act 182/1993
+- **Board** — Announcements with categories (info, urgent, event, maintenance), per-entrance targeting
+- **Owner Management** — Five roles: admin, owner, tenant, vote counter, caretaker
+- **PDF Minutes** — Auto-generated voting minutes with audit log and QR code
 - **Documents** — Upload and share building documents
-- **Settings** — Building configuration
 - **Multi-language** — Slovak and English UI
+- **Settings** — Building configuration, entrances, flats with ownership shares
+
+## Docker Image
+
+```bash
+docker pull ipk0/open-resiapp:latest
+```
+
+Available on [Docker Hub](https://hub.docker.com/r/ipk0/open-resiapp). Supports `linux/amd64` and `linux/arm64`.
 
 ## Quick Deploy (5 minutes)
 
 You need a VPS with Docker installed (any provider — Hetzner, AWS, Azure, DigitalOcean).
 
+**1. Create `docker-compose.yml`:**
+
+```yaml
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: resiapp
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    image: ipk0/open-resiapp:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/resiapp
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${APP_URL}
+      AUTH_TRUST_HOST: "true"
+      APP_NAME: ${APP_NAME:-Bytove spolocenstvo}
+      LANGUAGE: ${LANGUAGE:-sk}
+    volumes:
+      - uploads:/app/uploads
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+    depends_on:
+      - app
+    command: caddy reverse-proxy --from ${APP_DOMAIN} --to app:3000
+
+volumes:
+  postgres_data:
+  uploads:
+  caddy_data:
+```
+
+**2. Create `.env`:**
+
 ```bash
-# 1. Download compose file and env template
-curl -O https://raw.githubusercontent.com/open-resiapp/open-resiapp/main/docker-compose.hub.yml
-curl -O https://raw.githubusercontent.com/open-resiapp/open-resiapp/main/.env.production.example
+APP_NAME="Bytove spolocenstvo Hlavna 12"
+APP_URL=https://yourdomain.sk
+APP_DOMAIN=yourdomain.sk
+POSTGRES_PASSWORD=changeMe_veryLongPassword123
+NEXTAUTH_SECRET=changeMe_anotherRandomString456
+# Generate secrets: openssl rand -base64 32
+```
 
-# 2. Configure
-cp .env.production.example .env
-nano .env
-# Fill in: APP_URL, APP_DOMAIN, POSTGRES_PASSWORD, NEXTAUTH_SECRET
-# Generate secrets:
-#   openssl rand -base64 32   (for POSTGRES_PASSWORD)
-#   openssl rand -base64 64   (for NEXTAUTH_SECRET)
+**3. Deploy:**
 
-# 3. Deploy
-docker compose -f docker-compose.hub.yml up -d
+```bash
+docker compose up -d
+```
 
-# 4. Create your admin account
-docker compose -f docker-compose.hub.yml exec app npx tsx src/scripts/create-admin.ts --email admin@yourdomain.sk --name "Your Name"
+**4. Create admin account:**
 
-# 5. Open https://yourdomain.sk and log in
+```bash
+docker compose exec app npx tsx src/scripts/create-admin.ts \
+  --email admin@yourdomain.sk --name "Your Name"
 ```
 
 That's it. Database migrations run automatically on startup. HTTPS is handled by Caddy.
@@ -42,62 +111,31 @@ That's it. Database migrations run automatically on startup. HTTPS is handled by
 ## Update
 
 ```bash
-docker compose -f docker-compose.hub.yml pull
-docker compose -f docker-compose.hub.yml up -d
+docker compose pull
+docker compose up -d
 ```
 
 This pulls the latest image and restarts the app. Database migrations run automatically — no manual steps needed.
 
 ## Backup
 
-### Local backup (included)
-
-Download the backup script and add it to cron:
+### Automated backup
 
 ```bash
-curl -O https://raw.githubusercontent.com/open-resiapp/open-resiapp/main/scripts/backup.sh
-chmod +x backup.sh
-
-# Test it
-./backup.sh
-
-# Add to cron (daily at 3 AM)
-(crontab -l 2>/dev/null; echo "0 3 * * * cd $(pwd) && ./backup.sh >> /var/log/resiapp-backup.log 2>&1") | crontab -
+# Inside your project directory, create backup script
+docker compose exec db pg_dump -U postgres resiapp | gzip > backup_$(date +%Y%m%d).sql.gz
 ```
 
-### Remote backup (optional)
-
-For off-server backups that survive even if your VPS is compromised:
-
-| Provider | Tool | Setup script |
-|----------|------|-------------|
-| Hetzner Storage Box | BorgBackup | `backup-hetzner-setup.sh` |
-| AWS S3 | Restic | `backup-aws-setup.sh` |
-| Azure Blob Storage | Restic | `backup-azure-setup.sh` |
-
-Download the setup script for your provider and follow the instructions:
+Add to cron for daily backups:
 
 ```bash
-# Example: Hetzner Storage Box
-curl -O https://raw.githubusercontent.com/open-resiapp/open-resiapp/main/scripts/backup-hetzner-setup.sh
-chmod +x backup-hetzner-setup.sh
-# Add BORG_REPO, BORG_PASSPHRASE to .env, then:
-./backup-hetzner-setup.sh
+(crontab -l 2>/dev/null; echo "0 3 * * * cd /path/to/project && docker compose exec -T db pg_dump -U postgres resiapp | gzip > /backups/resiapp_\$(date +\%Y\%m\%d).sql.gz") | crontab -
 ```
 
 ### Restore
 
 ```bash
-curl -O https://raw.githubusercontent.com/open-resiapp/open-resiapp/main/scripts/restore.sh
-chmod +x restore.sh
-
-# From local backup
-./restore.sh /backups/resiapp/daily/db_2026-03-09_030000.sql.gz
-
-# From remote backup
-./restore.sh list              # show available archives
-./restore.sh borg latest       # restore latest borg archive
-./restore.sh restic latest     # restore latest restic snapshot
+gunzip < backup_20260309.sql.gz | docker compose exec -T db psql -U postgres resiapp
 ```
 
 ## Development
