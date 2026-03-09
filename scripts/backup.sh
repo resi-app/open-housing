@@ -65,4 +65,115 @@ find "$BACKUP_DIR/daily" -name "*.gz" -mtime +${KEEP_DAILY} -delete 2>/dev/null 
 # Remove weekly backups older than KEEP_WEEKLY weeks
 find "$BACKUP_DIR/weekly" -name "*.gz" -mtime +$((KEEP_WEEKLY * 7)) -delete 2>/dev/null || true
 
-log "Backup complete. Daily: $(ls "$BACKUP_DIR/daily"/*.gz 2>/dev/null | wc -l | tr -d ' ') files, Weekly: $(ls "$BACKUP_DIR/weekly"/*.gz 2>/dev/null | wc -l | tr -d ' ') files"
+log "Local backup complete. Daily: $(ls "$BACKUP_DIR/daily"/*.gz 2>/dev/null | wc -l | tr -d ' ') files, Weekly: $(ls "$BACKUP_DIR/weekly"/*.gz 2>/dev/null | wc -l | tr -d ' ') files"
+
+# --- Remote backup (optional) ---
+# Supports: BorgBackup (BORG_REPO) or Restic (RESTIC_REPOSITORY)
+BORG_REPO="${BORG_REPO:-}"
+RESTIC_REPOSITORY="${RESTIC_REPOSITORY:-}"
+
+if [ -n "$BORG_REPO" ] && [ -n "$RESTIC_REPOSITORY" ]; then
+  log "ERROR: Both BORG_REPO and RESTIC_REPOSITORY are set. Pick one."
+  log "  BORG_REPO → Hetzner Storage Box (backup-hetzner-setup.sh)"
+  log "  RESTIC_REPOSITORY → AWS S3 / Azure Blob (backup-aws-setup.sh / backup-azure-setup.sh)"
+elif [ -n "$BORG_REPO" ]; then
+  # --- BorgBackup (Hetzner Storage Box) ---
+  (
+    set +e
+    log "Starting remote backup via BorgBackup..."
+
+    BORG_PASSPHRASE="${BORG_PASSPHRASE:-}"
+    BORG_SSH_KEY="${BORG_SSH_KEY:-$HOME/.ssh/id_ed25519_borg}"
+
+    if [ -z "$BORG_PASSPHRASE" ]; then
+      log "ERROR: BORG_PASSPHRASE not set — skipping remote backup"
+      exit 0
+    fi
+
+    export BORG_REPO
+    export BORG_PASSPHRASE
+    export BORG_RSH="ssh -i $BORG_SSH_KEY -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30"
+
+    ARCHIVE_NAME="resiapp-${TIMESTAMP}"
+    BORG_PATHS=("$DUMP_FILE")
+    [ -f "$UPLOADS_FILE" ] && BORG_PATHS+=("$UPLOADS_FILE")
+
+    log "Creating borg archive: $ARCHIVE_NAME"
+    if borg create \
+      --compression zstd,6 \
+      --show-rc \
+      "::${ARCHIVE_NAME}" \
+      "${BORG_PATHS[@]}"; then
+      log "Borg archive created successfully"
+    else
+      BORG_RC=$?
+      if [ $BORG_RC -eq 1 ]; then
+        log "WARN: Borg finished with warnings (rc=$BORG_RC)"
+      else
+        log "ERROR: Borg create failed (rc=$BORG_RC)"
+      fi
+    fi
+
+    # Attempt prune — no-op in append-only mode, works in dev/test
+    log "Attempting borg prune (skipped in append-only mode)..."
+    borg prune \
+      --keep-daily=30 \
+      --keep-weekly=12 \
+      --keep-monthly=12 \
+      --show-rc 2>/dev/null || true
+
+    log "Remote backup (borg) complete"
+  ) || log "WARN: Borg remote backup failed — local backup is safe"
+
+elif [ -n "$RESTIC_REPOSITORY" ]; then
+  # --- Restic (AWS S3 / Azure Blob / any restic backend) ---
+  (
+    set +e
+    log "Starting remote backup via restic..."
+
+    RESTIC_PASSWORD="${RESTIC_PASSWORD:-}"
+
+    if [ -z "$RESTIC_PASSWORD" ]; then
+      log "ERROR: RESTIC_PASSWORD not set — skipping remote backup"
+      exit 0
+    fi
+
+    export RESTIC_REPOSITORY
+    export RESTIC_PASSWORD
+
+    # Export cloud provider credentials if set
+    [ -n "${AWS_ACCESS_KEY_ID:-}" ] && export AWS_ACCESS_KEY_ID
+    [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] && export AWS_SECRET_ACCESS_KEY
+    [ -n "${AZURE_ACCOUNT_NAME:-}" ] && export AZURE_ACCOUNT_NAME
+    [ -n "${AZURE_ACCOUNT_KEY:-}" ] && export AZURE_ACCOUNT_KEY
+
+    RESTIC_PATHS=("$DUMP_FILE")
+    [ -f "$UPLOADS_FILE" ] && RESTIC_PATHS+=("$UPLOADS_FILE")
+
+    log "Creating restic snapshot..."
+    if restic backup \
+      --tag resiapp \
+      --tag "daily-${DATE}" \
+      "${RESTIC_PATHS[@]}"; then
+      log "Restic snapshot created successfully"
+    else
+      log "ERROR: Restic backup failed (rc=$?)"
+    fi
+
+    # Attempt forget+prune — fails silently if IAM/immutability blocks deletes
+    log "Attempting restic forget (skipped if delete denied by policy)..."
+    restic forget \
+      --keep-daily 30 \
+      --keep-weekly 12 \
+      --keep-monthly 12 \
+      --prune \
+      --tag resiapp 2>/dev/null || true
+
+    log "Remote backup (restic) complete"
+  ) || log "WARN: Restic remote backup failed — local backup is safe"
+
+else
+  log "No remote backup configured (set BORG_REPO or RESTIC_REPOSITORY in .env)"
+fi
+
+log "Backup finished."

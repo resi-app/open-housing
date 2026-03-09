@@ -65,6 +65,15 @@ else
   log "Docker already installed"
 fi
 
+# --- Install BorgBackup (for remote backup to Hetzner Storage Box) ---
+log "Installing BorgBackup..."
+if ! command -v borg &>/dev/null; then
+  apt install -y borgbackup
+  log "BorgBackup installed: $(borg --version)"
+else
+  log "BorgBackup already installed: $(borg --version)"
+fi
+
 # --- Create backup directory ---
 mkdir -p /backups/resiapp/daily /backups/resiapp/weekly
 chown -R deploy:deploy /backups
@@ -102,3 +111,7 @@ log "     NEXTAUTH_SECRET: openssl rand -base64 64"
 log "  6. Deploy: docker compose -f docker-compose.prod.yml up -d --build"
 log "     (Migrations run automatically on startup)"
 log "  7. Seed (optional): docker compose -f docker-compose.prod.yml exec app node -e \"require('./drizzle/seed.js')\""
+log "  8. Remote backup (optional):"
+log "     - Set BORG_REPO, BORG_PASSPHRASE, BORG_SSH_KEY in .env"
+log "     - Run: ./scripts/backup-setup.sh"
+log "     - Configure append-only mode on Hetzner Storage Box (see setup output)"

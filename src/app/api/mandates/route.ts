@@ -1,10 +1,55 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { mandates, votings } from "@/db/schema";
+import { mandates, votings, users, flats } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { hasPermission } from "@/lib/permissions";
 import type { UserRole } from "@/types";
+
+export async function GET(request: NextRequest) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: "Neautorizovaný prístup" }, { status: 401 });
+  }
+
+  if (!hasPermission(session.user.role as UserRole, "createVoting")) {
+    return NextResponse.json({ error: "Nemáte oprávnenie" }, { status: 403 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const votingId = searchParams.get("votingId");
+
+  if (!votingId) {
+    return NextResponse.json({ error: "votingId je povinný" }, { status: 400 });
+  }
+
+  const fromOwner = alias(users, "fromOwner");
+  const toOwner = alias(users, "toOwner");
+  const verifiedByAdmin = alias(users, "verifiedByAdmin");
+
+  const rows = await db
+    .select({
+      id: mandates.id,
+      fromOwnerName: fromOwner.name,
+      fromFlatNumber: flats.flatNumber,
+      toOwnerName: toOwner.name,
+      paperDocumentConfirmed: mandates.paperDocumentConfirmed,
+      verifiedByAdminName: verifiedByAdmin.name,
+      verificationDate: mandates.verificationDate,
+      verificationNote: mandates.verificationNote,
+      isActive: mandates.isActive,
+      createdAt: mandates.createdAt,
+    })
+    .from(mandates)
+    .leftJoin(fromOwner, eq(mandates.fromOwnerId, fromOwner.id))
+    .leftJoin(toOwner, eq(mandates.toOwnerId, toOwner.id))
+    .leftJoin(flats, eq(mandates.fromFlatId, flats.id))
+    .leftJoin(verifiedByAdmin, eq(mandates.verifiedByAdminId, verifiedByAdmin.id))
+    .where(eq(mandates.votingId, votingId));
+
+  return NextResponse.json(rows);
+}
 
 export async function POST(request: NextRequest) {
   const session = await auth();

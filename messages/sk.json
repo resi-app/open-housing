@@ -108,7 +108,8 @@
     "ownersQuarterInfo": "Hlasovanie iniciované štvrtinou vlastníkov — elektronické hlasovanie nie je povolené.",
     "auditHashLabel": "Audit hash vášho hlasu",
     "flatHeader": "Byt {number}",
-    "legalNotice": "Právna doložka"
+    "legalNotice": "Právna doložka",
+    "paperVotePhotos": "Fotografie listinných hlasov"
   },
   "VotingNew": {
     "title": "Nové hlasovanie",
@@ -169,7 +170,9 @@
     "abstain": "ZDRŽAL SA",
     "submit": "Zaznamenať",
     "submitFailed": "Nepodarilo sa zaznamenať hlas",
-    "flat": "byt {number}"
+    "flat": "byt {number}",
+    "photoLabel": "Fotografia listinného hlasu (voliteľné)",
+    "uploadFailed": "Nepodarilo sa nahrať fotografiu"
   },
   "Mandate": {
     "title": "Splnomocnenie",
@@ -329,6 +332,11 @@
     "legalNoticePlaceholder": "Napr.: Hlasovanie podľa §14a zákona č. 182/1993 Z.z. o vlastníctve bytov a nebytových priestorov...",
     "legalNoticeSaved": "Právna doložka bola uložená.",
     "legalNoticeSaveFailed": "Nepodarilo sa uložiť právnu doložku."
+  },
+  "VotingMinutes": {
+    "downloadButton": "Stiahnuť zápisnicu",
+    "generating": "Generujem...",
+    "downloadFailed": "Nepodarilo sa vygenerovať zápisnicu"
   },
   "Profile": {
     "title": "Profil",

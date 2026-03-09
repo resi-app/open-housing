@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import type { VoteChoice } from "@/types";
 
@@ -42,8 +42,11 @@ export default function PaperVoteModal({
   const [ownerFlats, setOwnerFlats] = useState<OwnerFlat[]>([]);
   const [selectedFlat, setSelectedFlat] = useState("");
   const [selectedChoice, setSelectedChoice] = useState<VoteChoice | "">("");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -74,7 +77,33 @@ export default function PaperVoteModal({
     }
   }, [selectedOwner]);
 
+  // Clean up preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (photoPreview) URL.revokeObjectURL(photoPreview);
+    };
+  }, [photoPreview]);
+
   if (!isOpen) return null;
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] || null;
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    if (file) {
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    } else {
+      setPhotoFile(null);
+      setPhotoPreview(null);
+    }
+  }
+
+  function removePhoto() {
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -82,6 +111,29 @@ export default function PaperVoteModal({
 
     setLoading(true);
     setError("");
+
+    let paperPhotoUrl: string | null = null;
+
+    // Upload photo first if present
+    if (photoFile) {
+      const formData = new FormData();
+      formData.append("file", photoFile);
+      formData.append("category", "paper-votes");
+
+      const uploadRes = await fetch("/api/uploads", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        setError(t("uploadFailed"));
+        setLoading(false);
+        return;
+      }
+
+      const uploadData = await uploadRes.json();
+      paperPhotoUrl = uploadData.url;
+    }
 
     const res = await fetch("/api/votes", {
       method: "POST",
@@ -92,6 +144,7 @@ export default function PaperVoteModal({
         flatId: selectedFlat,
         choice: selectedChoice,
         voteType: "paper",
+        paperPhotoUrl,
       }),
     });
 
@@ -106,12 +159,14 @@ export default function PaperVoteModal({
     setSelectedOwner("");
     setSelectedFlat("");
     setSelectedChoice("");
+    setPhotoFile(null);
+    setPhotoPreview(null);
     onRecorded();
   }
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md p-6">
+      <div className="bg-white rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900">
             {t("title")}
@@ -199,6 +254,36 @@ export default function PaperVoteModal({
                 </label>
               ))}
             </div>
+          </div>
+
+          {/* Photo upload */}
+          <div>
+            <label className="block text-base font-medium text-gray-700 mb-1">
+              {t("photoLabel")}
+            </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleFileChange}
+              className="w-full text-base text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-base file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+            {photoPreview && (
+              <div className="mt-2 relative inline-block">
+                <img
+                  src={photoPreview}
+                  alt="Preview"
+                  className="max-h-40 rounded-lg border border-gray-200"
+                />
+                <button
+                  type="button"
+                  onClick={removePhoto}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-sm flex items-center justify-center hover:bg-red-600"
+                >
+                  &times;
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-2">

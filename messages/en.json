@@ -108,7 +108,8 @@
     "ownersQuarterInfo": "Voting initiated by quarter of owners — electronic voting is not allowed.",
     "auditHashLabel": "Audit hash of your vote",
     "flatHeader": "Flat {number}",
-    "legalNotice": "Legal notice"
+    "legalNotice": "Legal notice",
+    "paperVotePhotos": "Paper ballot photos"
   },
   "VotingNew": {
     "title": "New voting",
@@ -169,7 +170,9 @@
     "abstain": "ABSTAIN",
     "submit": "Record",
     "submitFailed": "Failed to record vote",
-    "flat": "flat {number}"
+    "flat": "flat {number}",
+    "photoLabel": "Paper ballot photo (optional)",
+    "uploadFailed": "Failed to upload photo"
   },
   "Mandate": {
     "title": "Power of Attorney",
@@ -329,6 +332,11 @@
     "legalNoticePlaceholder": "E.g.: Voting pursuant to §14a of Act No. 182/1993 Coll. on ownership of apartments and non-residential premises...",
     "legalNoticeSaved": "Legal notice has been saved.",
     "legalNoticeSaveFailed": "Failed to save legal notice."
+  },
+  "VotingMinutes": {
+    "downloadButton": "Download minutes",
+    "generating": "Generating...",
+    "downloadFailed": "Failed to generate minutes"
   },
   "Profile": {
     "title": "Profile",

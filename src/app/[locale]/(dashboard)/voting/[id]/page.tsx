@@ -9,6 +9,7 @@ import VoteButton from "@/components/voting/VoteButton";
 import VotingResults from "@/components/voting/VotingResults";
 import PaperVoteModal from "@/components/voting/PaperVoteModal";
 import MandateModal from "@/components/voting/MandateModal";
+import DownloadMinutesButton from "@/components/voting/DownloadMinutesButton";
 import { hasPermission } from "@/lib/permissions";
 import type {
   UserRole,
@@ -44,8 +45,21 @@ interface UserFlat {
   flatNumber: string;
 }
 
+interface VoteRow {
+  id: string;
+  flatId: string;
+  ownerId: string;
+  ownerName: string | null;
+  flatNumber: string;
+  voteType: string;
+  paperPhotoUrl: string | null;
+  choice: string;
+  createdAt: string;
+  auditHash: string;
+}
+
 interface VoteData {
-  votes: unknown[];
+  votes: VoteRow[];
   results: VotingResultsType;
   userVotedFlats: UserFlatVote[];
   userFlats: UserFlat[];
@@ -64,6 +78,7 @@ export default function VotingDetailPage() {
 
   const [voting, setVoting] = useState<VotingDetail | null>(null);
   const [voteData, setVoteData] = useState<VoteData | null>(null);
+  const [buildingData, setBuildingData] = useState<{ name: string; address: string; ico: string | null } | null>(null);
   const [legalNotice, setLegalNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [voting404, setVoting404] = useState(false);
@@ -105,9 +120,10 @@ export default function VotingDetailPage() {
       }
       const buildingRes = await fetch("/api/building");
       if (buildingRes.ok) {
-        const buildingData = await buildingRes.json();
-        if (buildingData?.legalNotice) {
-          setLegalNotice(buildingData.legalNotice);
+        const bldData = await buildingRes.json();
+        setBuildingData({ name: bldData.name, address: bldData.address, ico: bldData.ico });
+        if (bldData?.legalNotice) {
+          setLegalNotice(bldData.legalNotice);
         }
       }
       await fetchVoteData();
@@ -519,6 +535,50 @@ export default function VotingDetailPage() {
           results={voteData.results}
           totalVotes={voteData.totalVotes}
         />
+      )}
+
+      {/* Download minutes button */}
+      {isClosed && canManage && voteData && buildingData && (
+        <div className="mt-6">
+          <DownloadMinutesButton
+            votingId={id}
+            voting={voting}
+            voteData={voteData}
+            building={buildingData}
+            legalNotice={legalNotice}
+          />
+        </div>
+      )}
+
+      {/* Paper vote photos */}
+      {canManage && voteData && voteData.votes.some((v) => v.paperPhotoUrl) && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 mt-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">
+            {t("paperVotePhotos")}
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {voteData.votes
+              .filter((v) => v.paperPhotoUrl)
+              .map((v) => (
+                <a
+                  key={v.id}
+                  href={v.paperPhotoUrl!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block border border-gray-200 rounded-lg overflow-hidden hover:border-blue-400 transition-colors"
+                >
+                  <img
+                    src={v.paperPhotoUrl!}
+                    alt={`${v.ownerName} - ${v.flatNumber}`}
+                    className="w-full h-32 object-cover"
+                  />
+                  <div className="p-2 text-sm text-gray-600">
+                    {v.ownerName} &middot; {t("flatHeader", { number: v.flatNumber })}
+                  </div>
+                </a>
+              ))}
+          </div>
+        </div>
       )}
 
       <PaperVoteModal

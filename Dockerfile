@@ -33,6 +33,9 @@ COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/messages ./messages
+COPY --from=builder /app/src/scripts ./src/scripts
+COPY --from=builder /app/src/db ./src/db
+COPY --from=builder /app/src/lib ./src/lib
 
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 

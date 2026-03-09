@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
       flatId: votes.flatId,
       disputed: votes.disputed,
       auditHash: votes.auditHash,
+      paperPhotoUrl: votes.paperPhotoUrl,
       ownerName: users.name,
       flatNumber: flats.flatNumber,
       shareNumerator: flats.shareNumerator,
@@ -128,7 +129,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { votingId, choice, flatId, ownerId, voteType } = body;
+  const { votingId, choice, flatId, ownerId, voteType, paperPhotoUrl } = body;
 
   if (!votingId || !choice || !flatId) {
     return NextResponse.json(
@@ -283,6 +284,7 @@ export async function POST(request: NextRequest) {
         choice,
         voteType: isPaperVote ? "paper" : "electronic",
         recordedById: isPaperVote ? session.user.id : null,
+        paperPhotoUrl: isPaperVote ? (paperPhotoUrl || null) : null,
         auditHash,
       })
       .returning();
