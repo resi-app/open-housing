@@ -16,7 +16,16 @@ fi
 
 # --- Configuration ---
 BACKUP_DIR="${BACKUP_DIR:-/backups/resiapp}"
-COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"
+# Auto-detect compose file
+if [ -n "${COMPOSE_FILE:-}" ]; then
+  COMPOSE_FILE="$COMPOSE_FILE"
+elif [ -f docker-compose.prod.yml ]; then
+  COMPOSE_FILE="docker-compose.prod.yml"
+elif [ -f docker-compose.hub.yml ]; then
+  COMPOSE_FILE="docker-compose.hub.yml"
+else
+  COMPOSE_FILE="docker-compose.yml"
+fi
 DB_CONTAINER="$(docker compose -f "$COMPOSE_FILE" ps -q db 2>/dev/null || echo "")"
 KEEP_DAILY=7
 KEEP_WEEKLY=4

@@ -1,73 +1,124 @@
 # OpenResiApp
 
-Open-source web application for managing residential apartment buildings (bytove domy) in Slovakia. Built for building administrators, owners, and tenants to handle voting, announcements, document management, and owner administration.
+Open-source web application for managing residential apartment buildings (bytove domy) in Slovakia. Built for building administrators, owners, and tenants.
 
 ## Features
 
-- **Board (Nastenka)** — Post announcements with categories (info, urgent, event, maintenance), pin/unpin posts
-- **Voting** — Weighted voting by ownership share, electronic and paper ballots, mandate delegation, audit trail
-- **Owner Management** — User CRUD with role-based access (admin, owner, tenant, vote counter)
+- **Board** — Announcements with categories (info, urgent, event, maintenance)
+- **Voting** — Weighted voting by ownership share, electronic and paper ballots, mandate delegation
+- **Owner Management** — Users with role-based access (admin, owner, tenant, vote counter)
 - **Documents** — Upload and share building documents
-- **Settings** — Building configuration and management
-- **Authentication** — Secure login with NextAuth v5 credentials provider
-- **RBAC** — Role-based permissions across all features
+- **Settings** — Building configuration
+- **Multi-language** — Slovak and English UI
 
-## Tech Stack
+## Quick Deploy (5 minutes)
 
-- **Framework:** Next.js 14 (App Router)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS
-- **Database:** PostgreSQL 16
-- **ORM:** Drizzle ORM
-- **Auth:** NextAuth v5 (beta)
-- **Deployment:** Docker + Caddy
+You need a VPS with Docker installed (any provider — Hetzner, AWS, Azure, DigitalOcean).
 
-## Getting Started
+```bash
+# 1. Download compose file and env template
+curl -O https://raw.githubusercontent.com/open-resiapp/open-resiapp/main/docker-compose.hub.yml
+curl -O https://raw.githubusercontent.com/open-resiapp/open-resiapp/main/.env.production.example
+
+# 2. Configure
+cp .env.production.example .env
+nano .env
+# Fill in: APP_URL, APP_DOMAIN, POSTGRES_PASSWORD, NEXTAUTH_SECRET
+# Generate secrets:
+#   openssl rand -base64 32   (for POSTGRES_PASSWORD)
+#   openssl rand -base64 64   (for NEXTAUTH_SECRET)
+
+# 3. Deploy
+docker compose -f docker-compose.hub.yml up -d
+
+# 4. Create your admin account
+docker compose -f docker-compose.hub.yml exec app npx tsx src/scripts/create-admin.ts --email admin@yourdomain.sk --name "Your Name"
+
+# 5. Open https://yourdomain.sk and log in
+```
+
+That's it. Database migrations run automatically on startup. HTTPS is handled by Caddy.
+
+## Update
+
+```bash
+docker compose -f docker-compose.hub.yml pull
+docker compose -f docker-compose.hub.yml up -d
+```
+
+This pulls the latest image and restarts the app. Database migrations run automatically — no manual steps needed.
+
+## Backup
+
+### Local backup (included)
+
+Download the backup script and add it to cron:
+
+```bash
+curl -O https://raw.githubusercontent.com/open-resiapp/open-resiapp/main/scripts/backup.sh
+chmod +x backup.sh
+
+# Test it
+./backup.sh
+
+# Add to cron (daily at 3 AM)
+(crontab -l 2>/dev/null; echo "0 3 * * * cd $(pwd) && ./backup.sh >> /var/log/resiapp-backup.log 2>&1") | crontab -
+```
+
+### Remote backup (optional)
+
+For off-server backups that survive even if your VPS is compromised:
+
+| Provider | Tool | Setup script |
+|----------|------|-------------|
+| Hetzner Storage Box | BorgBackup | `backup-hetzner-setup.sh` |
+| AWS S3 | Restic | `backup-aws-setup.sh` |
+| Azure Blob Storage | Restic | `backup-azure-setup.sh` |
+
+Download the setup script for your provider and follow the instructions:
+
+```bash
+# Example: Hetzner Storage Box
+curl -O https://raw.githubusercontent.com/open-resiapp/open-resiapp/main/scripts/backup-hetzner-setup.sh
+chmod +x backup-hetzner-setup.sh
+# Add BORG_REPO, BORG_PASSPHRASE to .env, then:
+./backup-hetzner-setup.sh
+```
+
+### Restore
+
+```bash
+curl -O https://raw.githubusercontent.com/open-resiapp/open-resiapp/main/scripts/restore.sh
+chmod +x restore.sh
+
+# From local backup
+./restore.sh /backups/resiapp/daily/db_2026-03-09_030000.sql.gz
+
+# From remote backup
+./restore.sh list              # show available archives
+./restore.sh borg latest       # restore latest borg archive
+./restore.sh restic latest     # restore latest restic snapshot
+```
+
+## Development
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - PostgreSQL 16 (or Docker)
-- npm
 
 ### Setup
-
-1. Clone the repository:
 
 ```bash
 git clone https://github.com/open-resiapp/open-resiapp.git
 cd open-resiapp
-```
-
-2. Install dependencies:
-
-```bash
 npm install
-```
-
-3. Create a `.env` file based on `.env.example` and configure your database connection and auth secret.
-
-4. Start the database (if using Docker):
-
-```bash
-docker compose up db
-```
-
-5. Run migrations and seed:
-
-```bash
+docker compose up db        # start PostgreSQL
 npm run db:generate
 npm run db:migrate
 npm run db:seed
+npm run dev                 # http://localhost:3000
 ```
-
-6. Start the development server:
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Seed Credentials
 
@@ -76,50 +127,37 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | Admin | admin@test.sk  | Admin123!  |
 | Owner | jan@test.sk    | Admin123!  |
 | Owner | maria@test.sk  | Admin123!  |
-| Owner | peter@test.sk  | Admin123!  |
-| Owner | anna@test.sk   | Admin123!  |
 
-## Project Structure
-
-```
-src/
-  app/
-    (auth)/           # Login page
-    (dashboard)/      # Protected pages
-      board/          # Announcements board
-      voting/         # Voting system
-      owners/         # Owner/user management
-      settings/       # Building settings
-    api/              # API routes
-  components/         # Reusable UI components
-  db/                 # Schema, migrations, seed
-  lib/                # Auth, permissions, voting logic
-  types/              # TypeScript type definitions
-```
-
-## Scripts
+### Scripts
 
 | Command              | Description                    |
 |----------------------|--------------------------------|
 | `npm run dev`        | Start development server       |
 | `npm run build`      | Build for production           |
-| `npm run start`      | Start production server        |
 | `npm run lint`       | Run ESLint                     |
 | `npm run db:generate`| Generate Drizzle migrations    |
 | `npm run db:migrate` | Run database migrations        |
 | `npm run db:seed`    | Seed database with test data   |
 | `npm run db:studio`  | Open Drizzle Studio            |
 
+## Tech Stack
+
+- **Next.js 16** (App Router) + TypeScript
+- **Tailwind CSS**
+- **PostgreSQL 16** + Drizzle ORM
+- **NextAuth v5** (credentials provider)
+- **next-intl** (i18n)
+- **Docker** + Caddy
+
 ## Contributing
 
-Contributions are welcome! Please read the [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
+Contributions are welcome!
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/my-feature`)
-3. Commit your changes (`git commit -m 'Add my feature'`)
-4. Push to the branch (`git push origin feature/my-feature`)
-5. Open a Pull Request
+3. Commit your changes
+4. Open a Pull Request
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+[MIT License](LICENSE)
