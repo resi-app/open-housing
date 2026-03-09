@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
+import { useState, useEffect } from "react";
 import type { UserRole } from "@/types";
 import { hasPermission } from "@/lib/permissions";
 
@@ -31,6 +32,16 @@ export default function Sidebar({
 }) {
   const t = useTranslations("Sidebar");
   const pathname = usePathname();
+  const [buildingName, setBuildingName] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/building")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.name) setBuildingName(data.name);
+      })
+      .catch(() => {});
+  }, []);
 
   const visibleItems = navItems.filter(
     (item) => !item.permission || hasPermission(role, item.permission)
@@ -51,7 +62,7 @@ export default function Sidebar({
         }`}
       >
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-bold text-blue-600">{t("appName")}</h2>
+          <h2 className="text-lg font-bold text-blue-600">{buildingName || t("appName")}</h2>
           <p className="text-sm text-gray-500 mt-1">{t("appDescription")}</p>
         </div>
 

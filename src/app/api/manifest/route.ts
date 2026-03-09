@@ -1,7 +1,18 @@
 import { NextResponse } from "next/server";
+import { db } from "@/db";
+import { building } from "@/db/schema";
 
 export async function GET() {
-  const appName = process.env.APP_NAME || "OpenResiApp";
+  let appName = process.env.APP_NAME || "OpenResiApp";
+
+  try {
+    const [result] = await db.select({ name: building.name }).from(building).limit(1);
+    if (result?.name) {
+      appName = result.name;
+    }
+  } catch {
+    // DB not available — use env fallback
+  }
 
   return NextResponse.json({
     name: appName,
