@@ -9,7 +9,7 @@ interface SettingsTabsProps {
   onTabChange: (tab: SettingsTab) => void;
 }
 
-const tabs: SettingsTab[] = ["building", "entrances", "flats", "voting", "connections"];
+const tabs: SettingsTab[] = ["building", "entrances", "flats", "voting"/* , "connections" */];
 
 export default function SettingsTabs({ activeTab, onTabChange }: SettingsTabsProps) {
   const t = useTranslations("Settings");
