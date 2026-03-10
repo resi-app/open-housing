@@ -2,14 +2,14 @@
 
 import { useTranslations } from "next-intl";
 
-export type SettingsTab = "building" | "entrances" | "flats" | "voting";
+export type SettingsTab = "building" | "entrances" | "flats" | "voting" | "connections";
 
 interface SettingsTabsProps {
   activeTab: SettingsTab;
   onTabChange: (tab: SettingsTab) => void;
 }
 
-const tabs: SettingsTab[] = ["building", "entrances", "flats", "voting"];
+const tabs: SettingsTab[] = ["building", "entrances", "flats", "voting", "connections"];
 
 export default function SettingsTabs({ activeTab, onTabChange }: SettingsTabsProps) {
   const t = useTranslations("Settings");
@@ -19,6 +19,7 @@ export default function SettingsTabs({ activeTab, onTabChange }: SettingsTabsPro
     entrances: t("tabEntrances"),
     flats: t("tabFlats"),
     voting: t("tabVoting"),
+    connections: t("tabConnections"),
   };
 
   return (

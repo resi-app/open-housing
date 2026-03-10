@@ -61,6 +61,19 @@ export const quorumTypeEnum = pgEnum("quorum_type", [
   "two_thirds_all",
 ]);
 
+export const apiKeyPermissionEnum = pgEnum("api_key_permission", [
+  "read",
+  "read_write",
+  "full",
+]);
+
+export const pairingStatusEnum = pgEnum("pairing_status", [
+  "pending",
+  "completed",
+  "expired",
+  "revoked",
+]);
+
 // ── Tables ─────────────────────────────────────────────
 
 export const building = pgTable("building", {
@@ -288,6 +301,36 @@ export const invitations = pgTable("invitations", {
     .notNull(),
 });
 
+export const externalConnections = pgTable("external_connections", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: varchar("type", { length: 50 }).notNull(),
+  apiKeyHash: varchar("api_key_hash", { length: 255 }).notNull(),
+  apiKeyPrefix: varchar("api_key_prefix", { length: 12 }).notNull(),
+  permissions: apiKeyPermissionEnum("permissions").notNull().default("read"),
+  isActive: boolean("is_active").notNull().default(true),
+  lastUsedAt: timestamp("last_used_at"),
+  pairedAt: timestamp("paired_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const pairingRequests = pgTable("pairing_requests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: varchar("email", { length: 255 }).notNull(),
+  partAHash: varchar("part_a_hash", { length: 255 }).notNull(),
+  partAPrefix: varchar("part_a_prefix", { length: 12 }).notNull(),
+  connectionType: varchar("connection_type", { length: 50 }).notNull(),
+  permissions: apiKeyPermissionEnum("permissions").notNull().default("read"),
+  status: pairingStatusEnum("status").notNull().default("pending"),
+  expiresAt: timestamp("expires_at").notNull(),
+  completedAt: timestamp("completed_at"),
+  connectionId: uuid("connection_id").references(() => externalConnections.id),
+  createdById: uuid("created_by_id")
+    .references(() => users.id)
+    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // ── Relations ──────────────────────────────────────────
 
 export const buildingRelations = relations(building, ({ many }) => ({
@@ -441,5 +484,20 @@ export const userFlatsRelations = relations(userFlats, ({ one }) => ({
   flat: one(flats, {
     fields: [userFlats.flatId],
     references: [flats.id],
+  }),
+}));
+
+export const externalConnectionsRelations = relations(externalConnections, ({ many }) => ({
+  pairingRequests: many(pairingRequests),
+}));
+
+export const pairingRequestsRelations = relations(pairingRequests, ({ one }) => ({
+  connection: one(externalConnections, {
+    fields: [pairingRequests.connectionId],
+    references: [externalConnections.id],
+  }),
+  createdBy: one(users, {
+    fields: [pairingRequests.createdById],
+    references: [users.id],
   }),
 }));

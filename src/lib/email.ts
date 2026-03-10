@@ -71,6 +71,62 @@ export async function sendPasswordReset(params: {
   }
 }
 
+export async function sendPairingInvitation(params: {
+  recipientEmail: string;
+  buildingName: string;
+  buildingUrl: string;
+  partA: string;
+  expiryHours: number;
+}): Promise<boolean> {
+  const transporter = getTransporter();
+
+  if (!transporter) {
+    console.warn(
+      "[email] SMTP not configured — skipping pairing invitation email"
+    );
+    console.log("[email] Pairing token for", params.recipientEmail, ":", params.partA);
+    return false;
+  }
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1d4ed8;">Pozvánka na prepojenie</h2>
+      <p>Boli ste pozvaní na prepojenie s bytovým domom <strong>${params.buildingName}</strong>.</p>
+
+      <p>Na dokončenie párovania použite nasledujúci kód:</p>
+
+      <div style="margin: 24px 0; padding: 16px; background-color: #f3f4f6; border-radius: 8px; text-align: center;">
+        <code style="font-size: 14px; word-break: break-all; color: #1f2937;">${params.partA}</code>
+      </div>
+
+      <p><strong>URL inštancie:</strong><br/>
+        <a href="${params.buildingUrl}" style="color: #2563eb;">${params.buildingUrl}</a>
+      </p>
+
+      <p style="color: #dc2626; font-weight: bold;">
+        Kód je platný ${params.expiryHours} hodinu.
+      </p>
+
+      <p style="color: #6b7280; font-size: 14px;">
+        Zadajte tento kód a URL inštancie v administrácii vašej aplikácie na dokončenie prepojenia.
+      </p>
+    </div>
+  `;
+
+  try {
+    await transporter.sendMail({
+      from: emailFrom,
+      to: params.recipientEmail,
+      subject: `Pozvánka na prepojenie — ${params.buildingName}`,
+      html,
+    });
+    return true;
+  } catch (error) {
+    console.error("[email] Failed to send pairing invitation:", error);
+    return false;
+  }
+}
+
 export async function sendVoteConfirmation(params: {
   recipientEmail: string;
   voterName: string;

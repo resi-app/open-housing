@@ -13,6 +13,8 @@ import type {
   userFlats,
   pushSubscriptions,
   notificationPreferences,
+  externalConnections,
+  pairingRequests,
 } from "@/db/schema";
 
 export type Building = InferSelectModel<typeof building>;
@@ -28,8 +30,13 @@ export type Invitation = InferSelectModel<typeof invitations>;
 export type UserFlat = InferSelectModel<typeof userFlats>;
 export type PushSubscription = InferSelectModel<typeof pushSubscriptions>;
 export type NotificationPreference = InferSelectModel<typeof notificationPreferences>;
+export type ExternalConnection = InferSelectModel<typeof externalConnections>;
+export type PairingRequest = InferSelectModel<typeof pairingRequests>;
 
 export type UserRole = "admin" | "owner" | "tenant" | "vote_counter" | "caretaker";
+export type ApiKeyPermission = "read" | "read_write" | "full";
+export type PairingStatus = "pending" | "completed" | "expired" | "revoked";
+export type ConnectionType = "druzstvo" | "energy" | "housekeeper" | "other";
 export type NotificationType = "newPost" | "votingStarted";
 export type VoteChoice = "za" | "proti" | "zdrzal_sa";
 export type VoteType = "electronic" | "paper";

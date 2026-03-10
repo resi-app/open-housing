@@ -12,6 +12,7 @@ const permissions = {
   manageUsers: ["admin"],
   viewSettings: ["admin", "caretaker"],
   manageSettings: ["admin"],
+  manageApiKeys: ["admin"],
 } as const;
 
 export type Permission = keyof typeof permissions;

@@ -57,6 +57,13 @@
       "when": 1773048159870,
       "tag": "0007_spooky_vivisector",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1773125968398,
+      "tag": "0008_misty_dazzler",
+      "breakpoints": true
     }
   ]
 }
