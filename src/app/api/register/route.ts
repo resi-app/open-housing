@@ -89,11 +89,18 @@ export async function POST(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip");
   const userAgent = request.headers.get("user-agent");
 
-  const consentValues = [
+  const consentValues: {
+    userId: string;
+    consentType: "data_processing" | "communication";
+    action: "granted" | "withdrawn";
+    policyVersion: string;
+    ipAddress: string | null;
+    userAgent: string | null;
+  }[] = [
     {
       userId: newUser.id,
-      consentType: "data_processing" as const,
-      action: "granted" as const,
+      consentType: "data_processing",
+      action: "granted",
       policyVersion: CURRENT_POLICY_VERSION,
       ipAddress: ip?.split(",")[0]?.trim() || null,
       userAgent,
@@ -103,8 +110,8 @@ export async function POST(request: NextRequest) {
   if (consents.communication) {
     consentValues.push({
       userId: newUser.id,
-      consentType: "communication" as const,
-      action: "granted" as const,
+      consentType: "communication",
+      action: "granted",
       policyVersion: CURRENT_POLICY_VERSION,
       ipAddress: ip?.split(",")[0]?.trim() || null,
       userAgent,
